@@ -18,7 +18,7 @@
  */
 
 const { origin, hostname, port } = new URL(
-  import.meta.env.DASHBOARD_API_URL || "https://api.fonoster.com"
+  import.meta.env.DASHBOARD_API_URL || (typeof window !== "undefined" ? window.location.origin : "http://envoy:8449")
 );
 
 export const FONOSTER_CLIENT_CONFIG = Object.freeze({

@@ -41,7 +41,12 @@ import { Logger } from "~/core/shared/logger";
 export const getClient = () => {
   Logger.debug("[fonoster.client] Creating Fonoster WebClient instance");
 
-  const fonosterClient = new SDK.WebClient(FONOSTER_CLIENT_CONFIG);
+  const config = { ...FONOSTER_CLIENT_CONFIG };
+  // Override URL with window.location.origin in browser, envoy in server
+  if (typeof window !== "undefined") {
+    config.url = window.location.origin;
+  }
+  const fonosterClient = new SDK.WebClient(config);
   return fonosterClient;
 };
 
