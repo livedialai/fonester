@@ -113,7 +113,7 @@ PYFIX
 docker compose config -q 2>/dev/null || err "compose.yaml ungültig."
 
 # ═══ 6. envoy.yaml fix ═══════════════════════════════════════
-sed -i 's|^(application/grpc|application/grpc-web-text)$|^(application/grpc|application/grpc-web-text|application/grpc-web[+]proto)$|g' config/envoy.yaml
+sed -i -E 's#^(application/grpc|application/grpc-web-text)$#^(application/grpc|application/grpc-web-text|application/grpc-web[+]proto)$#g' config/envoy.yaml
 
 # ═══ 7. integrations.json ════════════════════════════════════
 rm -rf config/integrations.json
