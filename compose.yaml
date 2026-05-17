@@ -6,6 +6,7 @@ services:
       - 3030:3030
     environment:
       - SERVER_DASHBOARD_SESSION_SECRET
+      - DASHBOARD_ALLOW_INSECURE=true
 
   apiserver:
     image: fonoster/apiserver:0.17.1
@@ -135,9 +136,6 @@ services:
     platform: linux/x86_64
     network_mode: host
     environment:
-      PORT_MAX: ${RTPENGINE_PORT_MAX}
-      PORT_MIN: ${RTPENGINE_PORT_MIN}
-      PUBLIC_IP: ${RTPENGINE_PUBLIC_IP}
       PORT_MAX: ${RTPENGINE_PORT_MAX}
       PORT_MIN: ${RTPENGINE_PORT_MIN}
       PUBLIC_IP: ${RTPENGINE_PUBLIC_IP}

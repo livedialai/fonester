@@ -29,7 +29,7 @@ static_resources:
                             - name: "content-type"
                               safe_regex_match:
                                 google_re2: {}
-                                regex: "^(application/grpc|application/grpc-web-text)$"
+                                regex: "^(application/grpc|application/grpc-web-text|application/grpc-web[+]proto)$"
                         route:
                           cluster: apiserver-cluster
                           timeout: 0s
@@ -62,7 +62,7 @@ static_resources:
                             - name: "content-type"
                               safe_regex_match:
                                 google_re2: {}
-                                regex: "^(application/grpc|application/grpc-web-text)$"
+                                regex: "^(application/grpc|application/grpc-web-text|application/grpc-web[+]proto)$"
                         route:
                           cluster: apiserver-cluster
                           timeout: 0s
