@@ -5,14 +5,23 @@ Eigene Identity, kein api.fonoster.com, kein GitHub-OAuth.
 
 ## Schnellstart
 
+**Frischer Debian-12-Server (als root):**
+
+```bash
+bash <(curl -sSL https://raw.githubusercontent.com/livedialai/fonester/main/install.sh)
+```
+
+Das Script fragt interaktiv Domain, Email und Passwort ab, installiert alle Abhängigkeiten (Docker, Nginx, Certbot) und erledigt alles Weitere.
+
+⚠️ **Wichtig:** `bash <(curl ...)` verwenden — **nicht** `curl | bash` (Pipe belegt stdin, interaktive Prompts schlagen fehl).
+
+**Alternative bei bestehendem Git:**
+
 ```bash
 git clone https://github.com/livedialai/fonester
 cd fonester
-chmod +x install.sh
 ./install.sh
 ```
-
-Das Script fragt interaktiv Domain, Email und Passwort ab und erledigt alles Weitere.
 
 **Nach Installation:** `https://deine-domain.de` aufrufen.
 
