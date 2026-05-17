@@ -100,11 +100,15 @@ for l in lines:
     if s in ('PORT_MAX: ${RTPENGINE_PORT_MAX}', 'PORT_MIN: ${RTPENGINE_PORT_MIN}', 'PUBLIC_IP: ${RTPENGINE_PUBLIC_IP}'):
         if s in seen: continue; seen.add(s)
     result.append(l)
-with open('compose.yaml', 'w') as f: f.writelines(result)
+with open('compose.yaml', 'w') as f:
+    # add DASHBOARD_ALLOW_INSECURE after SERVER_DASHBOARD_SESSION_SECRET if missing
+    final = []
+    for l in result:
+        final.append(l)
+        if 'SERVER_DASHBOARD_SESSION_SECRET' in l and 'DASHBOARD_ALLOW_INSECURE' not in ''.join(result):
+            final.append('      - DASHBOARD_ALLOW_INSECURE=true\n')
+    f.writelines(final)
 PYFIX
-
-grep -q "DASHBOARD_ALLOW_INSECURE" compose.yaml || \
-    sed -i '/SERVER_DASHBOARD_SESSION_SECRET/a\      - DASHBOARD_ALLOW_INSECURE=true' compose.yaml
 
 docker compose config -q 2>/dev/null || err "compose.yaml ungültig."
 
