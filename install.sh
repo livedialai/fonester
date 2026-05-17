@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# curl -sSL https://raw.githubusercontent.com/livedialai/fonester/main/install.sh | bash
+# bash <(curl -sSL https://raw.githubusercontent.com/livedialai/fonester/main/install.sh)
 set -euo pipefail
 
 GREEN='\033[0;32m' YELLOW='\033[1;33m' CYAN='\033[0;36m' RED='\033[0;31m' NC='\033[0m'
