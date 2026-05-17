@@ -112,8 +112,10 @@ PYFIX
 
 docker compose config -q 2>/dev/null || err "compose.yaml ungültig."
 
-# ═══ 6. envoy.yaml fix ═══════════════════════════════════════
+# ═══ 6. envoy.yaml fixes ══════════════════════════════════════
 sed -i -E 's#^(application/grpc|application/grpc-web-text)$#^(application/grpc|application/grpc-web-text|application/grpc-web[+]proto)$#g' config/envoy.yaml
+# rate limit auf 10000/10s statt 100/60s
+sed -i '/general_api_rate_limit/,/fill_interval:/{s/max_tokens: 100/max_tokens: 10000/; s/tokens_per_fill: 100/tokens_per_fill: 10000/; s/fill_interval: 60s/fill_interval: 10s/}' config/envoy.yaml
 
 # ═══ 7. integrations.json ════════════════════════════════════
 rm -rf config/integrations.json
