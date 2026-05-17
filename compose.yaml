@@ -1,223 +1,222 @@
-     1|services:
-     2|  dashboard:
-     3|    image: fonoster/dashboard:0.17.1
-     4|    restart: unless-stopped
-     5|    ports:
-     6|      - 3030:3030
-     7|    environment:
-     8|      - SERVER_DASHBOARD_SESSION_SECRET
-     9|      - DASHBOARD_ALLOW_INSECURE=true
-    10|
-    11|  apiserver:
-    12|    image: livedial/apiserver:0.17.1
-    13|    restart: unless-stopped
-    14|    environment:
-    15|      - APISERVER_APP_URL
-    16|      - APISERVER_ASTERISK_ARI_PROXY_URL
-    17|      - APISERVER_ASTERISK_ARI_SECRET
-    18|      - APISERVER_ASTERISK_ARI_USERNAME
-    19|      - APISERVER_AUTHZ_SERVICE_ENABLED
-    20|      - APISERVER_AUTHZ_SERVICE_HOST
-    21|      - APISERVER_AUTHZ_SERVICE_METHODS
-    22|      - APISERVER_AUTHZ_SERVICE_PORT
-    23|      - APISERVER_CLOAK_ENCRYPTION_KEY
-    24|      - APISERVER_DATABASE_URL
-    25|      - APISERVER_IDENTITY_DATABASE_URL
-    26|      - APISERVER_IDENTITY_ISSUER
-    27|      - APISERVER_IDENTITY_CONTACT_VERIFICATION_REQUIRED
-    28|      - APISERVER_IDENTITY_TWO_FACTOR_AUTHENTICATION_REQUIRED
-    29|      - APISERVER_IDENTITY_WORKSPACE_INVITE_EXPIRATION
-    30|      - APISERVER_IDENTITY_WORKSPACE_INVITE_FAIL_URL
-    31|      - APISERVER_IDENTITY_WORKSPACE_INVITE_URL
-    32|      - APISERVER_IDENTITY_OAUTH2_GITHUB_CLIENT_ID
-    33|      - APISERVER_IDENTITY_OAUTH2_GITHUB_CLIENT_SECRET
-    34|      - APISERVER_IDENTITY_OAUTH2_GITHUB_ENABLED
-    35|      - APISERVER_INFLUXDB_INIT_ORG
-    36|      - APISERVER_INFLUXDB_INIT_PASSWORD
-    37|      - APISERVER_INFLUXDB_INIT_TOKEN
-    38|      - APISERVER_INFLUXDB_INIT_USERNAME
-    39|      - APISERVER_INFLUXDB_URL
-    40|      - APISERVER_LOGS_FORMAT
-    41|      - APISERVER_LOGS_LEVEL
-    42|      - APISERVER_LOGS_TRANSPORT
-    43|      - APISERVER_NATS_URL
-    44|      - APISERVER_OWNER_EMAIL
-    45|      - APISERVER_OWNER_NAME
-    46|      - APISERVER_OWNER_PASSWORD
-    47|      - APISERVER_ROOT_DOMAIN
-    48|      - APISERVER_SMTP_AUTH_PASS
-    49|      - APISERVER_SMTP_AUTH_USER
-    50|      - APISERVER_SMTP_HOST
-    51|      - APISERVER_SMTP_PORT
-    52|      - APISERVER_SMTP_SECURE
-    53|      - APISERVER_SMTP_SENDER
-    54|      - APISERVER_SIGNALING_SERVER
-    55|      - APISERVER_TWILIO_ACCOUNT_SID
-    56|      - APISERVER_TWILIO_AUTH_TOKEN
-    57|      - APISERVER_TWILIO_PHONE_NUMBER
-    58|    expose:
-    59|      - 50051
-    60|    volumes:
-    61|      - ./config/keys:/opt/fonoster/keys:ro
-    62|      - ./config/integrations.json:/opt/fonoster/integrations.json:ro
-    63|
-    64|  autopilot:
-    65|    image: livedial/autopilot:0.17.1
-    66|    restart: unless-stopped
-    67|    expose:
-    68|      - 50061
-    69|    environment:
-    70|      - AUTOPILOT_AWS_S3_ACCESS_KEY_ID
-    71|      - AUTOPILOT_AWS_S3_ENDPOINT
-    72|      - AUTOPILOT_AWS_S3_REGION
-    73|      - AUTOPILOT_AWS_S3_SECRET_ACCESS_KEY
-    74|      - AUTOPILOT_CONVERSATION_PROVIDER
-    75|      - AUTOPILOT_KNOWLEDGE_BASE_ENABLED
-    76|      - AUTOPILOT_LOGS_FORMAT
-    77|      - AUTOPILOT_LOGS_LEVEL
-    78|      - AUTOPILOT_LOGS_TRANSPORT
-    79|      - AUTOPILOT_OPENAI_API_KEY
-    80|      - AUTOPILOT_RECORDING_BASE_URL
-    81|      - AUTOPILOT_UNSTRUCTURED_API_KEY
-    82|      - AUTOPILOT_UNSTRUCTURED_API_URL
-    83|    volumes:
-    84|      - ./config/integrations.json:/opt/fonoster/integrations.json:ro
-    85|
-    86|  routr:
-    87|    image: livedial/routr-one:2.13.22
-    88|    restart: unless-stopped
-    89|    labels:
-    90|      - "autoheal=true"
-    91|    environment:
-    92|      DATABASE_URL: ${ROUTR_DATABASE_URL}
-    93|      EXTERNAL_ADDRS: ${ROUTR_EXTERNAL_ADDRS}
-    94|      LOGS_FORMAT: ${ROUTR_LOGS_FORMAT}
-    95|      LOGS_LEVEL: ${ROUTR_LOGS_LEVEL}
-    96|      LOGS_TRANSPORT: ${ROUTR_LOGS_TRANSPORT}
-    97|      NATS_PUBLISHER_ENABLED: true
-    98|      NATS_PUBLISHER_URL: ${ROUTR_NATS_PUBLISHER_URL}
-    99|      RTPENGINE_HOST: ${ROUTR_RTPENGINE_HOST}
-   100|      START_INTERNAL_DB: "false"
-   101|      CONNECT_VERIFIER_PUBLIC_KEY_PATH: /etc/routr/keys/public.pem
-   102|    expose:
-   103|      - 51907
-   104|      - 51908
-   105|    ports:
-   106|      - 5060:5060/udp
-   107|      - 5060-5063:5060-5063
-   108|    # Add this healthcheck along with the autoheal container as we are having issues with Routr crashing out.
-   109|    # We will need a proper fix for this before we can remove this healthcheck.
-   110|    healthcheck:
-   111|      test:
-   112|        [
-   113|          "CMD-SHELL",
-   114|          'printf "REGISTER sip:localhost SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1:5061;branch=z9hG4bKhealth\r\nFrom: <sip:health@localhost>;tag=1234\r\nTo: <sip:health@localhost>\r\nCall-ID: health-$$@localhost\r\nCSeq: 1 REGISTER\r\nMax-Forwards: 70\r\nContent-Type: text/plain\r\nContent-Length: 4\r\n\r\nping" | nc -u -w 1 127.0.0.1 5060 | grep -Eq "^SIP/2.0"'
-   115|        ]
-   116|      interval: 10s
-   117|      timeout: 5s
-   118|      retries: 6
-   119|      start_period: 15s
-   120|    volumes:
-   121|      - ./config/keys/public.pem:/etc/routr/keys/public.pem
-   122|
-   123|  # RTPEngine uses a range of ports to handle RTP traffic. Because exposing a large range of ports 
-   124|  # is not possible in Docker, we need to use network_mode: host.
-   125|  #
-   126|  # Unfortunately, network_mode: host is not supported for Windows or Mac.
-   127|  # In those cases, we need to use a different approach.
-   128|  #
-   129|  # By default we are opening a small range of ports (10000-10100) to handle RTP traffic.
-   130|  # However, this is not enough for production environments.
-   131|  #
-   132|  # We recommend that when using Linux you use network_mode: host and remove the ports section.
-   133|  rtpengine:
-   134|    image: livedial/rtpengine:0.3.17
-   135|    restart: unless-stopped
-   136|    platform: linux/x86_64
-   137|    network_mode: host
-   138|    environment:
-   139|      PORT_MAX: ${RTPENGINE_PORT_MAX}
-   140|      PORT_MIN: ${RTPENGINE_PORT_MIN}
-   141|      PUBLIC_IP: ${RTPENGINE_PUBLIC_IP}
-   142|
-   143|  asterisk:
-   144|    image: livedial/asterisk:20
-   145|    restart: unless-stopped
-   146|    environment:
-   147|      ARI_PROXY_URL: ${ASTERISK_ARI_PROXY_URL}
-   148|      ARI_SECRET: ${ASTERISK_ARI_SECRET}
-   149|      ARI_USERNAME: ${ASTERISK_ARI_USERNAME}
-   150|      CODECS: ${ASTERISK_CODECS}
-   151|      DTMF_MODE: ${ASTERISK_DTMF_MODE}
-   152|      RTP_PORT_END: ${ASTERISK_RTP_PORT_END}
-   153|      RTP_PORT_START: ${ASTERISK_RTP_PORT_START}
-   154|      SIPPROXY_HOST: ${ASTERISK_SIPPROXY_HOST}
-   155|      SIPPROXY_PORT: ${ASTERISK_SIPPROXY_PORT}
-   156|      SIPPROXY_SECRET: ${ASTERISK_SIPPROXY_SECRET}
-   157|      SIPPROXY_USERNAME: ${ASTERISK_SIPPROXY_USERNAME}
-   158|    expose:
-   159|      - 6060
-   160|
-   161|  postgres:
-   162|    image: livedial/postgres:16.10-alpine3.22
-   163|    restart: unless-stopped
-   164|    environment:
-   165|      PGTZ: UTC
-   166|      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-   167|      POSTGRES_USER: ${POSTGRES_USER}
-   168|      TZ: UTC
-   169|    expose:
-   170|      - 5432
-   171|    volumes:
-   172|      - db:/var/lib/postgresql/data
-   173|
-   174|  influxdb:
-   175|    image: livedial/influxdb:2.7
-   176|    restart: unless-stopped
-   177|    expose:
-   178|      - 8086
-   179|    environment:
-   180|      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_INIT_TOKEN}
-   181|      DOCKER_INFLUXDB_INIT_BUCKET: calls
-   182|      DOCKER_INFLUXDB_INIT_MODE: setup
-   183|      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_INIT_ORG}
-   184|      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_INIT_PASSWORD}
-   185|      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_INIT_USERNAME}
-   186|    volumes:
-   187|      - influxdb:/var/lib/influxdb2
-   188|
-   189|  nats:
-   190|    image: livedial/nats:2.11.8
-   191|    restart: unless-stopped
-   192|    expose:
-   193|      - 4222
-   194|
-   195|  envoy:
-   196|    image: livedial/envoy:v1.35.0
-   197|    restart: unless-stopped
-   198|    volumes:
-   199|      - ./config/envoy.yaml:/etc/envoy/envoy.yaml:ro
-   200|      # If using letsencrypt, you need to mount the letsencrypt directory
-   201|      # by uncommenting the following line and changing the domain name to match your domain.
-   202|      #
-   203|      # Symbolic links will not work here!!!
-   204|      #
-   205|      # - ./path/to/letsencrypt:/etc/letsencrypt:ro
-   206|    ports:
-   207|      - 8449:8449
-   208|      # If using letsencrypt, you need to expose port 443 and remove the default HTTP port (8449)
-   209|      # - 443:443
-   210|
-   211|  autoheal:
-   212|    image: livedial/autoheal:latest
-   213|    restart: unless-stopped
-   214|    environment:
-   215|      - AUTOHEAL_CONTAINER_LABEL=autoheal
-   216|      - AUTOHEAL_INTERVAL=10
-   217|    volumes:
-   218|      - /var/run/docker.sock:/var/run/docker.sock
-   219|
-   220|volumes:
-   221|  db:
-   222|  influxdb:
-   223|
+services:
+  dashboard:
+    image: fonoster/dashboard:0.17.1
+    restart: unless-stopped
+    ports:
+      - 3030:3030
+    environment:
+      - SERVER_DASHBOARD_SESSION_SECRET
+      - DASHBOARD_ALLOW_INSECURE=true
+
+  apiserver:
+    image: livedial/apiserver:0.17.1
+    restart: unless-stopped
+    environment:
+      - APISERVER_APP_URL
+      - APISERVER_ASTERISK_ARI_PROXY_URL
+      - APISERVER_ASTERISK_ARI_SECRET
+      - APISERVER_ASTERISK_ARI_USERNAME
+      - APISERVER_AUTHZ_SERVICE_ENABLED
+      - APISERVER_AUTHZ_SERVICE_HOST
+      - APISERVER_AUTHZ_SERVICE_METHODS
+      - APISERVER_AUTHZ_SERVICE_PORT
+      - APISERVER_CLOAK_ENCRYPTION_KEY
+      - APISERVER_DATABASE_URL
+      - APISERVER_IDENTITY_DATABASE_URL
+      - APISERVER_IDENTITY_ISSUER
+      - APISERVER_IDENTITY_CONTACT_VERIFICATION_REQUIRED
+      - APISERVER_IDENTITY_TWO_FACTOR_AUTHENTICATION_REQUIRED
+      - APISERVER_IDENTITY_WORKSPACE_INVITE_EXPIRATION
+      - APISERVER_IDENTITY_WORKSPACE_INVITE_FAIL_URL
+      - APISERVER_IDENTITY_WORKSPACE_INVITE_URL
+      - APISERVER_IDENTITY_OAUTH2_GITHUB_CLIENT_ID
+      - APISERVER_IDENTITY_OAUTH2_GITHUB_CLIENT_SECRET
+      - APISERVER_IDENTITY_OAUTH2_GITHUB_ENABLED
+      - APISERVER_INFLUXDB_INIT_ORG
+      - APISERVER_INFLUXDB_INIT_PASSWORD
+      - APISERVER_INFLUXDB_INIT_TOKEN
+      - APISERVER_INFLUXDB_INIT_USERNAME
+      - APISERVER_INFLUXDB_URL
+      - APISERVER_LOGS_FORMAT
+      - APISERVER_LOGS_LEVEL
+      - APISERVER_LOGS_TRANSPORT
+      - APISERVER_NATS_URL
+      - APISERVER_OWNER_EMAIL
+      - APISERVER_OWNER_NAME
+      - APISERVER_OWNER_PASSWORD
+      - APISERVER_ROOT_DOMAIN
+      - APISERVER_SMTP_AUTH_PASS
+      - APISERVER_SMTP_AUTH_USER
+      - APISERVER_SMTP_HOST
+      - APISERVER_SMTP_PORT
+      - APISERVER_SMTP_SECURE
+      - APISERVER_SMTP_SENDER
+      - APISERVER_SIGNALING_SERVER
+      - APISERVER_TWILIO_ACCOUNT_SID
+      - APISERVER_TWILIO_AUTH_TOKEN
+      - APISERVER_TWILIO_PHONE_NUMBER
+    expose:
+      - 50051
+    volumes:
+      - ./config/keys:/opt/fonoster/keys:ro
+      - ./config/integrations.json:/opt/fonoster/integrations.json:ro
+
+  autopilot:
+    image: livedial/autopilot:0.17.1
+    restart: unless-stopped
+    expose:
+      - 50061
+    environment:
+      - AUTOPILOT_AWS_S3_ACCESS_KEY_ID
+      - AUTOPILOT_AWS_S3_ENDPOINT
+      - AUTOPILOT_AWS_S3_REGION
+      - AUTOPILOT_AWS_S3_SECRET_ACCESS_KEY
+      - AUTOPILOT_CONVERSATION_PROVIDER
+      - AUTOPILOT_KNOWLEDGE_BASE_ENABLED
+      - AUTOPILOT_LOGS_FORMAT
+      - AUTOPILOT_LOGS_LEVEL
+      - AUTOPILOT_LOGS_TRANSPORT
+      - AUTOPILOT_OPENAI_API_KEY
+      - AUTOPILOT_RECORDING_BASE_URL
+      - AUTOPILOT_UNSTRUCTURED_API_KEY
+      - AUTOPILOT_UNSTRUCTURED_API_URL
+    volumes:
+      - ./config/integrations.json:/opt/fonoster/integrations.json:ro
+
+  routr:
+    image: livedial/routr-one:2.13.22
+    restart: unless-stopped
+    labels:
+      - "autoheal=true"
+    environment:
+      DATABASE_URL: ${ROUTR_DATABASE_URL}
+      EXTERNAL_ADDRS: ${ROUTR_EXTERNAL_ADDRS}
+      LOGS_FORMAT: ${ROUTR_LOGS_FORMAT}
+      LOGS_LEVEL: ${ROUTR_LOGS_LEVEL}
+      LOGS_TRANSPORT: ${ROUTR_LOGS_TRANSPORT}
+      NATS_PUBLISHER_ENABLED: true
+      NATS_PUBLISHER_URL: ${ROUTR_NATS_PUBLISHER_URL}
+      RTPENGINE_HOST: ${ROUTR_RTPENGINE_HOST}
+      START_INTERNAL_DB: "false"
+      CONNECT_VERIFIER_PUBLIC_KEY_PATH: /etc/routr/keys/public.pem
+    expose:
+      - 51907
+      - 51908
+    ports:
+      - 5060:5060/udp
+      - 5060-5063:5060-5063
+    # Add this healthcheck along with the autoheal container as we are having issues with Routr crashing out.
+    # We will need a proper fix for this before we can remove this healthcheck.
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'printf "REGISTER sip:localhost SIP/2.0\r\nVia: SIP/2.0/UDP 127.0.0.1:5061;branch=z9hG4bKhealth\r\nFrom: <sip:health@localhost>;tag=1234\r\nTo: <sip:health@localhost>\r\nCall-ID: health-$$@localhost\r\nCSeq: 1 REGISTER\r\nMax-Forwards: 70\r\nContent-Type: text/plain\r\nContent-Length: 4\r\n\r\nping" | nc -u -w 1 127.0.0.1 5060 | grep -Eq "^SIP/2.0"'
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 15s
+    volumes:
+      - ./config/keys/public.pem:/etc/routr/keys/public.pem
+
+  # RTPEngine uses a range of ports to handle RTP traffic. Because exposing a large range of ports 
+  # is not possible in Docker, we need to use network_mode: host.
+  #
+  # Unfortunately, network_mode: host is not supported for Windows or Mac.
+  # In those cases, we need to use a different approach.
+  #
+  # By default we are opening a small range of ports (10000-10100) to handle RTP traffic.
+  # However, this is not enough for production environments.
+  #
+  # We recommend that when using Linux you use network_mode: host and remove the ports section.
+  rtpengine:
+    image: livedial/rtpengine:0.3.17
+    restart: unless-stopped
+    platform: linux/x86_64
+    network_mode: host
+    environment:
+      PORT_MAX: ${RTPENGINE_PORT_MAX}
+      PORT_MIN: ${RTPENGINE_PORT_MIN}
+      PUBLIC_IP: ${RTPENGINE_PUBLIC_IP}
+
+  asterisk:
+    image: livedial/asterisk:20
+    restart: unless-stopped
+    environment:
+      ARI_PROXY_URL: ${ASTERISK_ARI_PROXY_URL}
+      ARI_SECRET: ${ASTERISK_ARI_SECRET}
+      ARI_USERNAME: ${ASTERISK_ARI_USERNAME}
+      CODECS: ${ASTERISK_CODECS}
+      DTMF_MODE: ${ASTERISK_DTMF_MODE}
+      RTP_PORT_END: ${ASTERISK_RTP_PORT_END}
+      RTP_PORT_START: ${ASTERISK_RTP_PORT_START}
+      SIPPROXY_HOST: ${ASTERISK_SIPPROXY_HOST}
+      SIPPROXY_PORT: ${ASTERISK_SIPPROXY_PORT}
+      SIPPROXY_SECRET: ${ASTERISK_SIPPROXY_SECRET}
+      SIPPROXY_USERNAME: ${ASTERISK_SIPPROXY_USERNAME}
+    expose:
+      - 6060
+
+  postgres:
+    image: livedial/postgres:16.10-alpine3.22
+    restart: unless-stopped
+    environment:
+      PGTZ: UTC
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      TZ: UTC
+    expose:
+      - 5432
+    volumes:
+      - db:/var/lib/postgresql/data
+
+  influxdb:
+    image: livedial/influxdb:2.7
+    restart: unless-stopped
+    expose:
+      - 8086
+    environment:
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_INIT_TOKEN}
+      DOCKER_INFLUXDB_INIT_BUCKET: calls
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_INIT_ORG}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_INIT_PASSWORD}
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_INIT_USERNAME}
+    volumes:
+      - influxdb:/var/lib/influxdb2
+
+  nats:
+    image: livedial/nats:2.11.8
+    restart: unless-stopped
+    expose:
+      - 4222
+
+  envoy:
+    image: livedial/envoy:v1.35.0
+    restart: unless-stopped
+    volumes:
+      - ./config/envoy.yaml:/etc/envoy/envoy.yaml:ro
+      # If using letsencrypt, you need to mount the letsencrypt directory
+      # by uncommenting the following line and changing the domain name to match your domain.
+      #
+      # Symbolic links will not work here!!!
+      #
+      # - ./path/to/letsencrypt:/etc/letsencrypt:ro
+    ports:
+      - 8449:8449
+      # If using letsencrypt, you need to expose port 443 and remove the default HTTP port (8449)
+      # - 443:443
+
+  autoheal:
+    image: livedial/autoheal:latest
+    restart: unless-stopped
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+      - AUTOHEAL_INTERVAL=10
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  db:
+  influxdb:
