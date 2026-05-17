@@ -157,9 +157,9 @@ log "Dashboard-Source gepatcht"
 # ═══ 9. Dashboard bauen ═════════════════════════════════════
 info "Baue Dashboard (2-5 min)..."
 cd mods/dashboard
-docker build -t fonoster-dashboard-local:0.17.1 . 2>&1 | tail -3
+docker build -t livedial/dashboard-local:0.17.1 . 2>&1 | tail -3
 cd "$FONESTER_DIR"
-sed -i 's|image: fonoster/dashboard:0.17.1|image: fonoster-dashboard-local:0.17.1|' compose.yaml
+sed -i 's|image: fonoster/dashboard:0.17.1|image: livedial/dashboard-local:0.17.1|' compose.yaml
 
 # ═══ 10. SSL ══════════════════════════════════════════════════
 info "SSL-Zertifikat..."
