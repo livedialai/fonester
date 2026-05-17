@@ -87,7 +87,7 @@ content = re.sub(r'ROUTR_RTPENGINE_HOST=\S+', 'ROUTR_RTPENGINE_HOST=' + os.envir
 content = re.sub(r'APISERVER_OWNER_EMAIL=\S*', 'APISERVER_OWNER_EMAIL=' + os.environ['EMAIL'], content)
 content = re.sub(r'APISERVER_OWNER_PASSWORD=\S*', 'APISERVER_OWNER_PASSWORD=' + os.environ['PASS'], content)
 if 'SERVER_DASHBOARD_SESSION_SECRET=' not in content:
-    content += '\\nSERVER_DASHBOARD_SESSION_SECRET=' + os.environ['SECRET'] + '\\n'
+    content += '\nSERVER_DASHBOARD_SESSION_SECRET=' + os.environ['SECRET'] + '\n'
 with open('.env', 'w') as f: f.write(content)
 PYENV
 
