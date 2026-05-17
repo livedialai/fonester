@@ -209,7 +209,7 @@ fi
 
 # ═══ 13. Starten ══════════════════════════════════════════════
 info "Starte Fonester..."
-docker compose pull 2>&1 | tail -3
+docker compose pull --ignore-pull-failures 2>&1 | tail -3
 docker compose up -d 2>&1
 sleep 15
 
