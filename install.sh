@@ -78,11 +78,18 @@ cd "$FONESTER_DIR"
 
 # ═══ 4. .env ══════════════════════════════════════════════════
 log "Konfiguriere .env..."
-sed -i "s/SET_YOUR_IP/$SERVER_IP/g" .env
-sed -i "s|ROUTR_RTPENGINE_HOST=rtpengine|ROUTR_RTPENGINE_HOST=$SERVER_IP|" .env
-sed -i "s/APISERVER_OWNER_EMAIL=.*/APISERVER_OWNER_EMAIL=$ADMIN_EMAIL/" .env
-sed -i "s/APISERVER_OWNER_PASSWORD=.*/APISERVER_OWNER_PASSWORD=$ADMIN_PASS/" .env
-grep -q "SERVER_DASHBOARD_SESSION_SECRET=" .env || echo "SERVER_DASHBOARD_SESSION_SECRET=$SESSION_SECRET" >> .env
+export IP="$SERVER_IP" EMAIL="$ADMIN_EMAIL" PASS="$ADMIN_PASS" SECRET="$SESSION_SECRET"
+python3 << 'PYENV'
+import os, re
+with open('.env', 'r') as f: content = f.read()
+content = content.replace('SET_YOUR_IP', os.environ['IP'])
+content = re.sub(r'ROUTR_RTPENGINE_HOST=\S+', 'ROUTR_RTPENGINE_HOST=' + os.environ['IP'], content)
+content = re.sub(r'APISERVER_OWNER_EMAIL=\S*', 'APISERVER_OWNER_EMAIL=' + os.environ['EMAIL'], content)
+content = re.sub(r'APISERVER_OWNER_PASSWORD=\S*', 'APISERVER_OWNER_PASSWORD=' + os.environ['PASS'], content)
+if 'SERVER_DASHBOARD_SESSION_SECRET=' not in content:
+    content += '\\nSERVER_DASHBOARD_SESSION_SECRET=' + os.environ['SECRET'] + '\\n'
+with open('.env', 'w') as f: f.write(content)
+PYENV
 
 # ═══ 5. compose.yaml fixes ═══════════════════════════════════
 python3 << 'PYFIX'
