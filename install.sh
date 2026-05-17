@@ -17,18 +17,18 @@ echo "╚═══════════════════════�
 echo ""
 
 # ═══ DOMAIN ══════════════════════════════════════════════════
-read -rp "Domain: " DOMAIN
+read -rp "Domain: " DOMAIN </dev/tty
 [[ -z "$DOMAIN" ]] && err "Domain erforderlich."
 
 # ═══ EMAIL ════════════════════════════════════════════════════
-read -rp "Admin Email [admin@$DOMAIN]: " ADMIN_EMAIL
+read -rp "Admin Email [admin@$DOMAIN]: " ADMIN_EMAIL </dev/tty
 ADMIN_EMAIL=${ADMIN_EMAIL:-admin@$DOMAIN}
 
 # ═══ PASSWORT ═════════════════════════════════════════════════
 while true; do
-    read -rsp "Admin Passwort (min. 8): " ADMIN_PASS; echo ""
+    read -rsp "Admin Passwort (min. 8): " ADMIN_PASS </dev/tty; echo ""
     [[ ${#ADMIN_PASS} -lt 8 ]] && warn "Min. 8 Zeichen." && continue
-    read -rsp "Wiederholen: " ADMIN_PASS2; echo ""
+    read -rsp "Wiederholen: " ADMIN_PASS2 </dev/tty; echo ""
     [[ "$ADMIN_PASS" != "$ADMIN_PASS2" ]] && warn "Ungleich." && continue
     break
 done
@@ -62,7 +62,7 @@ command -v dig &>/dev/null || apt-get install -y -qq dnsutils
 DNS_IP=$(dig +short "$DOMAIN" @8.8.8.8 2>/dev/null | tail -1 || true)
 if [[ -z "$DNS_IP" ]]; then
     warn "Kein A-Record: $DOMAIN → $SERVER_IP"
-    read -rp "Enter wenn DNS bereit... "
+    read -rp "Enter wenn DNS bereit... " </dev/tty
     DNS_IP=$(dig +short "$DOMAIN" @8.8.8.8 2>/dev/null | tail -1 || true)
     [[ -z "$DNS_IP" ]] && err "DNS immer noch nicht auflösbar."
 fi
