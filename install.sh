@@ -45,7 +45,6 @@ docker compose version &>/dev/null || apt-get install -y -qq docker-compose-plug
 log "Compose: $(docker compose version 2>/dev/null | head -1)"
 
 for pkg in git nginx certbot python3-certbot-nginx; do
-    dpkg -l "$pkg" &>/dev/null && continue
     command -v "${pkg%%-*}" &>/dev/null && continue
     apt-get install -y -qq "$pkg"
 done
